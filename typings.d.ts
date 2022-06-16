@@ -1,5 +1,8 @@
 export interface Post {
   _id: string;
+  name:string;
+  email:string;
+  comment:string;
   _createdAt: string;
   title: string;
   author: {
@@ -17,3 +20,4 @@ export interface Post {
   };
   body: [object];
 }
+

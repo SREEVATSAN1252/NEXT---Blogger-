@@ -8,6 +8,7 @@ import PortableText from "react-portable-text";
 import { useState } from "react";
 interface props {
   post: Post;
+  comments:Post
 }
 interface iFormInout {
   name: string;
@@ -15,7 +16,7 @@ interface iFormInout {
   comment: string;
   _id: string;
 }
-function Post({ post }: props) {
+function Post({ post,comments}: props) {
   const [submit, setSubmit] = useState(false);
   const {
     register,
@@ -23,9 +24,11 @@ function Post({ post }: props) {
     formState: { errors },
   } = useForm<iFormInout>();
   const Submit: SubmitHandler<iFormInout> = async (data) => {
+    setSubmit(false);
     await fetch("/api/createComment", {
       method: "POST",
       body: JSON.stringify(data),
+      
     }).then(() => setSubmit(true));
   };
 
@@ -61,14 +64,19 @@ function Post({ post }: props) {
 
       <hr className="max-w-lg  my-5 mx-auto border-orange-500" />
       {submit ? (
-        <div className="flex flex-col bg-yellow-500  py-10 my-10 text-white max-w-2xl mx-auto ">
+        <div className="flex flex-col bg-yellow-500  py-10 my-10 text-white max-w-3xl mx-auto ">
           <h1 className="text-3xl font-bold mx-auto ">
             Thanks For your Comments,
           </h1>
-          <p className="mx-auto text-black ">
+          <p className="mx-auto text-black mt-5 ">
             ONCE THE COMMENT IS APPROVED IT WILL BE DISPLAYED BELOW
           </p>
+          <h1>
+            {comments.name}
+          </h1>
+
         </div>
+        
       ) : (
         <form
           className="flex flex-col p-5 max-w-2xl mx-auto mb-10"
@@ -166,9 +174,16 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       }
       }
       `;
+      const querry2 = `*[_type=="comment" && approved==true]{
+        name,
+        email,
+          comment,
+        }`
   const post = await sanityClient.fetch(querry, {
     slug: params?.slug,
+    
   });
+  const comments = await sanityClient.fetch(querry2)
   if (!post) {
     return {
       notFound: true,
@@ -178,6 +193,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   return {
     props: {
       post,
+      comments,
     },
     revalidate: 60,
   };
