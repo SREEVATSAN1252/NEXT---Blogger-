@@ -8,7 +8,6 @@ import PortableText from "react-portable-text";
 import { useState } from "react";
 interface props {
   post: Post;
-  comments:Post
 }
 interface iFormInout {
   name: string;
@@ -16,7 +15,8 @@ interface iFormInout {
   comment: string;
   _id: string;
 }
-function Post({ post,comments}: props) {
+
+function Post({ post }: props) {
   const [submit, setSubmit] = useState(false);
   const {
     register,
@@ -28,9 +28,9 @@ function Post({ post,comments}: props) {
     await fetch("/api/createComment", {
       method: "POST",
       body: JSON.stringify(data),
-      
     }).then(() => setSubmit(true));
   };
+  console.log(post);
 
   return (
     <main>
@@ -71,12 +71,7 @@ function Post({ post,comments}: props) {
           <p className="mx-auto text-black mt-5 ">
             ONCE THE COMMENT IS APPROVED IT WILL BE DISPLAYED BELOW
           </p>
-          <h1>
-            {comments.name}
-          </h1>
-
         </div>
-        
       ) : (
         <form
           className="flex flex-col p-5 max-w-2xl mx-auto mb-10"
@@ -135,6 +130,17 @@ function Post({ post,comments}: props) {
           />
         </form>
       )}
+      <div className="flex flex-col p-10 my-10 max-w-2xl mx-auto shadow shadow-yellow-500 space-y-2">
+        <h3 className="text-4xl">COMMENTS</h3>
+        <hr className="pb-2"/>
+        {post.comment.map((c) => (
+          <div key={c._id}>
+            <p>
+              <span className="text-yellow-500">{c.name}</span>:{" "}{c.comment}
+            </p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
@@ -162,28 +168,27 @@ export const getStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const querry = `*[_type=="post" && slug.current == $slug][0]{
-        _id,
-        title,
-        slug,
-        _createdAt,
-        mainImage,
-        body,
-        description,
-        author -> {
-      name,image
-      }
-      }
+    _id,
+    title,
+    slug,
+    _createdAt,
+    mainImage,
+    body,
+    description,
+    author -> {
+  name,image
+  },
+'comment':*[_type=="comment" && post._ref ==^._id && approved == true],
+   
+
+
+  }
       `;
-      const querry2 = `*[_type=="comment" && approved==true]{
-        name,
-        email,
-          comment,
-        }`
+
   const post = await sanityClient.fetch(querry, {
     slug: params?.slug,
-    
   });
-  const comments = await sanityClient.fetch(querry2)
+
   if (!post) {
     return {
       notFound: true,
@@ -193,7 +198,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   return {
     props: {
       post,
-      comments,
     },
     revalidate: 60,
   };
